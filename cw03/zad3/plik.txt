@@ -1,0 +1,7 @@
+rm -rf test1.txt
+ls -a -u
+ls -al
+touch test.txt
+ps -al
+rm test.txt
+touch test1.txt

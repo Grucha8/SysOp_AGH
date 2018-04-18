@@ -1,0 +1,3 @@
+ls -a -l
+ls -l
+../heh.sh -a
