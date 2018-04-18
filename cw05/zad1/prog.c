@@ -127,6 +127,8 @@ char** separatePipe(char *argv){
 
 }
 
+pid_t prevPid;
+
 /*
  * @brief: funkcja wykonujaca polecenie
  * @params: argv - tablica z poleceniem oraz atrybutami
@@ -142,10 +144,9 @@ void exec_func(char **argv) {
     for(i = 0; i < MAXCOMMANDS && argv[i] != NULL; i++){
         func = separatePipe(argv[i]);
 
-        if(i > 0){
-            close(fd[i-1][0]);
-            close(fd[i-1][1]);
-        }
+        for(int j = 0; func[j] != NULL; j++)
+            printf("%s ", func[j]);
+        printf("\n==================\n");
 
         //odpalenie "rury"
         if(pipe(fd[i]) < 0){
@@ -156,16 +157,12 @@ void exec_func(char **argv) {
             err_sys("fork error");
         else if(pid == 0){  //potomek
 
-            if(i == 0){
-                close(fd[0][0]);    //zamykamy wejscie w przypadku pierwszego programu
-            }
-
             if(i != 0){             //wszystkie programy oprocz pierwszego wczytuja
-                if(fd[i][0] != STDIN_FILENO){
-                    if(dup2(fd[i][0], STDIN_FILENO) != STDIN_FILENO)
+                if(fd[i-1][0] != STDIN_FILENO){
+                    if(dup2(fd[i-1][0], STDIN_FILENO) != STDIN_FILENO)
                         err_sys("dup2 error in stdin");
                 }
-                close(fd[i][0]);
+                close(fd[i-1][0]);
             }
 
             if(argv[i+1] != NULL){  //wszystkie programy oprocz ostatniego wpisuja
@@ -183,10 +180,11 @@ void exec_func(char **argv) {
 
             exit(0);
         }
+
+        prevPid = pid;
     }
 
-    close(fd[i][0]);
-    close(fd[i][1]);
+
 
     wait(NULL);
     exit(0);
