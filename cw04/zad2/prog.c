@@ -16,9 +16,7 @@ void obslugaINT(int signum, siginfo_t *info, void *context);
 void obslugaUSR1(int signum, siginfo_t *info, void *context);
 void obslugaCHLD(int signum, siginfo_t *info, void *context);
 void obslugaRT(int signum, siginfo_t *info, void *context);
-void obslugaDzieckaUSR1(int signum);
-void obslugaDzieckaINT(int signum);
-static int childFunction(void);
+
 
 int main(int argc, char* argv[]){
     if(argc < 3){
@@ -80,29 +78,6 @@ int main(int argc, char* argv[]){
 
 
 }
-
-/*
- * @brief:  funkcja odpowiedzialna za wykonywanie
- *          operacji jakie ma robic potomek
- */
-static int childFunction(void){
-    srand((unsigned int) getpid());
-
-
-    unsigned int a = (rand() % 11);
-    sleep(a);
-
-    //wyslanie sygnalu o pozwolenie pracy do taty
-    kill(getppid(), SIGUSR1);
-
-    int sig = rand() % 32;
-
-    kill(getppid(), SIGRTMIN+sig);
-
-    //zwracanie ile sekund spal
-    return a;
-}
-
 
 
 void obslugaINT(int signum, siginfo_t *info, void *context) {
