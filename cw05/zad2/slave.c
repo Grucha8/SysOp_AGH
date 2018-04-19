@@ -11,8 +11,6 @@ void err_sys(char* a){
 
 //[1] -namedPipe, [2]-N
 int main(int argc, char* argv[]){
-    printf("jebac\n");
-
     if(argc != 3){
         err_sys("Slave: zla ilosc argumentow");
     }
@@ -56,6 +54,8 @@ int main(int argc, char* argv[]){
         //spimy 2-5 sec
         sleep((unsigned) (rand()%(5-1) + 2));
     }
+
+    free(dateBuffer);
 
     fclose(pipeFile);
     exit(0);
