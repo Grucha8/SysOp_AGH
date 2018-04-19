@@ -1,1 +1,1 @@
-ls -l /etc | sort
+ls -l /etc | tail -n +2 | sort

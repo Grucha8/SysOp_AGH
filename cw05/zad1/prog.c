@@ -16,7 +16,7 @@ static void err_sys(char* message){
 }
 
 void reading_from_file(FILE* file);
-void exec_func(char **argv);
+void exec_func(char **argv1);
 
 int main(int argc, char* argv[]){
 
@@ -37,6 +37,8 @@ int main(int argc, char* argv[]){
     reading_from_file(file);
 
 }
+
+int ile = 0;
 
 void reading_from_file(FILE* file){
     char*       line = NULL;
@@ -65,6 +67,8 @@ void reading_from_file(FILE* file){
 
                 token = strtok(NULL, s);
 
+                ile++;
+
                 /*
                  * ogolnie to jest problem jak mamy
                  * linie kodu to wtedy ostatni argument
@@ -81,7 +85,15 @@ void reading_from_file(FILE* file){
             }
         }
 
-        exec_func(argv);
+
+        pid_t pid2 = fork();
+        if(pid2 == 0) {
+            exec_func(argv);
+            exit(0);
+        }
+
+        int status;
+        wait(&status);
 
         //uwalnianie pamieci
         for(int i = 0; i < MAXCOMMANDS; i++)
@@ -119,58 +131,61 @@ char** separatePipe(char *argv){
     //teraz mamy w func[] polecenie do odpalenia
 
     return func;
-
-
-    for(int i = 0; i < MAXPARAMETERS; i++)
-        free(func[i]);
-    free(func);
-
 }
 
-pid_t prevPid;
+pid_t prevPID;
 
 /*
  * @brief: funkcja wykonujaca polecenie
  * @params: argv - tablica z poleceniem oraz atrybutami
  *
  */
-void exec_func(char **argv) {
+void exec_func(char **argv1) {
     pid_t  pid;
     char** func;
 
-    int fd[MAXCOMMANDS][2];
+    printf("\n\n========== %i ===============\n\n", ile);
+
+    int fd[2][2];
 
     int i;
-    for(i = 0; i < MAXCOMMANDS && argv[i] != NULL; i++){
-        func = separatePipe(argv[i]);
+    for(i = 0; i < ile; i++){
 
-        for(int j = 0; func[j] != NULL; j++)
-            printf("%s ", func[j]);
-        printf("\n==================\n");
+        if(i > 0){
+            close(fd[i%2][0]);
+            close(fd[i%2][1]);
+        }
 
         //odpalenie "rury"
-        if(pipe(fd[i]) < 0){
+        if(pipe(fd[i%2]) < 0){
             err_sys("pipe error");
         }
 
         if((pid = fork()) < 0)
             err_sys("fork error");
         else if(pid == 0){  //potomek
+            func = separatePipe(argv1[i]);
+
+            for(int j = 0; j < 6; j++)
+                printf("%s ", func[j]);
+            printf("\n==================\n");
 
             if(i != 0){             //wszystkie programy oprocz pierwszego wczytuja
-                if(fd[i-1][0] != STDIN_FILENO){
-                    if(dup2(fd[i-1][0], STDIN_FILENO) != STDIN_FILENO)
+                if(fd[(i+1)%2][0] != STDIN_FILENO){
+                    if(dup2(fd[(i+1)%2][0], STDIN_FILENO) != STDIN_FILENO)
                         err_sys("dup2 error in stdin");
                 }
-                close(fd[i-1][0]);
+
+                close(fd[(i+1)%2][1]);
             }
 
-            if(argv[i+1] != NULL){  //wszystkie programy oprocz ostatniego wpisuja
-                if(fd[i][1] != STDOUT_FILENO){
-                    if(dup2(fd[i][1], STDOUT_FILENO) != STDOUT_FILENO)
+            if(i != (ile - 1)){  //wszystkie programy oprocz ostatniego wpisuja
+
+                if(fd[i%2][1] != STDOUT_FILENO){
+                    if(dup2(fd[i%2][1], STDOUT_FILENO) != STDOUT_FILENO)
                         err_sys("dup2 error in stdout");
                 }
-                close(fd[i][1]);
+                close(fd[i%2][0]);
             }
 
             if(execvp(func[0], func) < 0){
@@ -180,11 +195,10 @@ void exec_func(char **argv) {
 
             exit(0);
         }
-
-        prevPid = pid;
     }
 
-
+    close(fd[i%2][0]);
+    close(fd[i%2][1]);
 
     wait(NULL);
     exit(0);
