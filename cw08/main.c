@@ -62,9 +62,6 @@ struct thread_data{
 // 1 = watki, 2 = plik wejsciowy, 3 = plik z filtr, 4 = plik wynikowy
 int main(int argc, char* argv[]){
     struct timespec start, end;
-    //static long clk;
-    //clk = sysconf(_SC_CLK_TCK);
-
 
     prog_init(argc, argv);
 
@@ -157,6 +154,9 @@ void *thread_function(void* arg){
     my_data = (struct thread_data *) arg;
     int i;
     int j;
+    struct timespec tstart, tend;
+
+    clock_gettime(CLOCK_REALTIME, &tstart);
 
     int strapWidth = ceil((double)(W / Threads));
     int start = (my_data->thread_num) * strapWidth;
@@ -167,6 +167,15 @@ void *thread_function(void* arg){
             J[i][j] = abs(round(filter_fun(i, j)));
         }
     }
+    clock_gettime(CLOCK_REALTIME, &tend);
+
+    long long t;
+    if(C == 64)
+        t = tend.tv_sec - tstart.tv_sec;
+    else
+        t = (tend.tv_nsec - tstart.tv_nsec);
+
+    printf("Watek: %i - %lli\n", my_data->thread_num, t);
 
     return (void *) 0;
 }
