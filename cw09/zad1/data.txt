@@ -4,5 +4,5 @@
 pan_tadeusz2.txt
 3
 >
-0
+1
 1

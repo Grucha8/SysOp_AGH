@@ -10,6 +10,9 @@
 
 /* ============DEFINE BLOCK============ */
 #define ERROR_MSG(format, ...) { printf(format, ##__VA_ARGS__); exit(-1);}
+#define RED   "\x1B[31m"
+#define BLU   "\x1B[34m"
+#define WHT   "\x1B[37m"
 
 /* ============END OF DEFINE BLOCK============ */
 
@@ -186,11 +189,14 @@ void parse_line(int whichBlock, int writingFlag){
 
     len = strlen(tmp);
 
-    if (writingFlag)
-        printf("Manufacturer: adding to data:<<%s>>", tmp);
+    if (tmp[len-1] = '\n')
+        tmp[len-1] = '\0';
 
     data.dataArray[whichBlock] = calloc(len+1, sizeof(char));
     strcpy(data.dataArray[whichBlock], tmp);
+
+    if (writingFlag)
+        printf(RED "Manufacturer: adding to data:<<%s>>\n", tmp);
 }
 
 
@@ -199,13 +205,13 @@ void* man_function(void* arg){
     my_data = (struct thread_arg*) arg;
 
     if (my_data->writingFlag)
-        printf("Manufacturer: starring work\n");
+        printf(RED "Manufacturer: starring work\n");
 
     while (1) {
         pthread_mutex_lock(&mutex);
 
         if (my_data->writingFlag)
-            printf("Manufacturer: getting mutex\n");
+            printf(RED "Manufacturer: getting mutex\n");
 
         // checking if full
         while (data.status == FULL){
@@ -228,7 +234,7 @@ void* man_function(void* arg){
         data.manufacturerPosition = (whichBlock + 1) % my_data->N;
 
         if (my_data->writingFlag)
-            printf("Manufacturer: giving away mutex\n");
+            printf(RED "Manufacturer: giving away mutex\n");
         pthread_mutex_unlock(&mutex);
     }
 }
@@ -248,15 +254,15 @@ void write_string(int whichBlock, int searching, int maxSize){
     switch (searching){
         case EQUAL:
             if (strlen(tmp) == maxSize)
-                printf("%s", tmp);
+                printf(WHT "%s\n", tmp);
             break;
         case GREATER:
             if (strlen(tmp) > maxSize)
-                printf("%s", tmp);
+                printf(WHT "%s\n", tmp);
             break;
         case SMALLER:
             if (strlen(tmp) < maxSize)
-                printf("%s", tmp);
+                printf(WHT "%s\n", tmp);
             break;
         default:
             printf("ERROR\n");
@@ -271,14 +277,14 @@ void* cus_function(void *arg){
     my_data = (struct thread_arg*) arg;
 
     if (my_data->writingFlag)
-        printf("Customer: starting work\n");
+        printf(BLU "Customer: starting work\n");
 
     while (1){
         pthread_mutex_lock(&mutex);
 
 
         if (my_data->writingFlag)
-            printf("Customer: getting mutex\n");
+            printf(BLU "Customer: getting mutex\n");
 
         // waiting for an item
         while (data.customerPosition == data.manufacturerPosition && data.status == NOTFULL){
@@ -299,7 +305,7 @@ void* cus_function(void *arg){
 
 
         if (my_data->writingFlag)
-            printf("Customer: giving away mutex\n");
+            printf(BLU "Customer: giving away mutex\n");
 
         pthread_mutex_unlock(&mutex);
     }
