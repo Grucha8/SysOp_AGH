@@ -131,23 +131,29 @@ void threads_handler() {
 
 }
 
+int min(int a, int b){
+    if (a > b)
+        return b;
+    else
+        return a;
+}
 
 double filter_fun(int x, int y){
 
     double s = 0;
-    for (int i = 0; i < C; ++i) {
-        int a = (int) round(fmax(0, x - ceil((double) C / 2) + i));
-        //a--;
-        a = a < W ? a : (W-1);
-        for (int j = 0; j < C; ++j) {
-            int b = (int) round(fmax(0, y - ceil((double) C / 2) + j));
-           // b--;
-            b = b < H ? b : H-1;
-            s += I[a][b] * K[i][j];
+    for (int i = 1; i <= C; ++i) {
+        int a = min((int) round(fmax(1, x - ceil((double) C / 2) + i)), W);
+
+        for (int j = 1; j <= C; ++j) {
+
+            int b = min((int) round(fmax(1, y - ceil((double) C / 2) + j)), H);
+            s += I[a-1][b-1] * K[i-1][j-1];
         }
     }
+
     return s;
 }
+
 
 void *thread_function(void* arg){
     struct thread_data *my_data;
@@ -158,13 +164,14 @@ void *thread_function(void* arg){
 
     clock_gettime(CLOCK_REALTIME, &tstart);
 
-    int strapWidth = ceil((double)(W / Threads));
+    int strapWidth = ceil((double)W / Threads);
     int start = (my_data->thread_num) * strapWidth;
     int end = ((start + strapWidth) < W) ? (start + strapWidth) : W;
 
+
     for (i = start; i < end; ++i) {
         for (j = 0; j < H; ++j) {
-            J[i][j] = abs(round(filter_fun(i, j)));
+            J[i][j] = abs(round(filter_fun(i+1, j+1)));
         }
     }
     clock_gettime(CLOCK_REALTIME, &tend);
@@ -237,8 +244,8 @@ void parse_filter_file(FILE *pFILE) {
 
     fclose(pFILE);
 
-    if (fabs(1.0 - sum) > EPSILION)
-        ERROR_MSG("Sum of filter matrix is not 1\n");
+    //if (fabs(1.0 - sum) > EPSILION)
+    //    ERROR_MSG("Sum of filter matrix is not 1\n");
 }
 
 
